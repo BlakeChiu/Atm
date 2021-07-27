@@ -2,9 +2,15 @@ package com.example.atm;
 
 import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
+import androidx.core.app.ActivityCompat;
+import androidx.core.content.ContextCompat;
 
+import android.Manifest;
 import android.app.AlertDialog;
+import android.content.Intent;
+import android.content.pm.PackageManager;
 import android.os.Bundle;
+import android.provider.MediaStore;
 import android.util.Log;
 import android.view.View;
 import android.widget.CheckBox;
@@ -21,6 +27,7 @@ import org.jetbrains.annotations.NotNull;
 public class LoginActivity extends AppCompatActivity {
 
     private static final String TAG = LoginActivity.class.getSimpleName();
+    private static final int REQUEST_CODE_CAMERA = 5;
     private EditText edUserid;
     private EditText edPasswd;
     private CheckBox cbRemember;
@@ -29,6 +36,15 @@ public class LoginActivity extends AppCompatActivity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_login);
+
+        int permission=ContextCompat.checkSelfPermission(this, Manifest.permission.CAMERA);  //詢問系統使用者有沒有收到同意的值
+        if(permission== PackageManager.PERMISSION_GRANTED){  //查看有沒有預設同意拍照
+//            takePhoto();
+        }else{
+            ActivityCompat.requestPermissions(this,
+                    new String[]{Manifest.permission.CAMERA},REQUEST_CODE_CAMERA);
+        }
+
         getSharedPreferences("atm",MODE_PRIVATE)
                 .edit()
                 .putInt("LEVEL",3)
@@ -55,6 +71,22 @@ public class LoginActivity extends AppCompatActivity {
         String userid=getSharedPreferences("atm",MODE_PRIVATE)
                 .getString("USERID","");
         edUserid.setText(userid);
+    }
+
+    @Override
+    public void onRequestPermissionsResult(int requestCode, @NonNull @NotNull String[] permissions,   //如果按下允許後的結果
+                                           @NonNull @NotNull int[] grantResults) {
+        super.onRequestPermissionsResult(requestCode, permissions, grantResults);
+        if(requestCode==REQUEST_CODE_CAMERA){
+            if(grantResults[0]==PackageManager.PERMISSION_GRANTED){
+                takePhoto();
+            }
+        }
+    }
+
+    private void takePhoto() {   //開啟拍照功能
+        Intent intent=new Intent(MediaStore.ACTION_IMAGE_CAPTURE);
+        startActivity(intent);
     }
 
     public void login(View view){
