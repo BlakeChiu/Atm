@@ -13,9 +13,13 @@ import android.database.Cursor;
 import android.os.Bundle;
 import android.provider.ContactsContract;
 import android.util.Log;
+import android.view.Menu;
+import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.TextView;
+
+import com.google.firebase.database.FirebaseDatabase;
 
 import org.jetbrains.annotations.NotNull;
 
@@ -26,6 +30,7 @@ public class ContactActivity extends AppCompatActivity {
 
     private static final int REQUEST_CONTACTS = 80;
     private static final String TAG = ContactActivity.class.getSimpleName();
+    private List<Contact> contacts;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -44,7 +49,7 @@ public class ContactActivity extends AppCompatActivity {
         //read contacts
         Cursor cursor=getContentResolver().query(ContactsContract.Contacts.CONTENT_URI,
                 null,null,null,null);
-        List<Contact> contacts=new ArrayList<>();
+        contacts = new ArrayList<>();
         while(cursor.moveToNext()){
             int id=cursor.getInt(cursor.getColumnIndex(ContactsContract.Contacts._ID));  //取得ID
             String name=cursor.getString(
@@ -73,7 +78,34 @@ public class ContactActivity extends AppCompatActivity {
         recyclerView.setHasFixedSize(true);
         recyclerView.setLayoutManager(new LinearLayoutManager(this));
         recyclerView.setAdapter(adpter);
+    }
 
+    @Override
+    public boolean onCreateOptionsMenu(Menu menu) {
+        getMenuInflater().inflate(R.menu.menu_contact,menu);
+        return super.onCreateOptionsMenu(menu);
+    }
+
+    @Override
+    public boolean onPrepareOptionsMenu(Menu menu) {
+        return super.onPrepareOptionsMenu(menu);
+    }
+
+    @Override
+    public boolean onOptionsItemSelected(@NonNull MenuItem item) {  //上傳按鈕可以上傳通訊錄
+        if(item.getItemId()==R.id.action_upload){
+            //upload to Firebase
+            Log.d(TAG, "onOptionsItemSelected: ");
+            String userid=getSharedPreferences("atm",MODE_PRIVATE)
+                    .getString("USERID",null);
+            if (userid != null) {
+                FirebaseDatabase.getInstance().getReference("user")
+                        .child(userid)
+                        .child("contacts")
+                        .setValue(contacts);
+            }
+        }
+        return super.onOptionsItemSelected(item);
     }
 
     public class ContactAdpter extends RecyclerView.Adapter<ContactAdpter.ContactHolder> {
